@@ -14,6 +14,7 @@ export interface Device {
   wakeTarget: { mac: string | null; label: string | null }
   checkup: { active: boolean; startedAt: string | null; note: string | null }
   led: { blinking: boolean }
+  restart: { intervalMinutes: number | null }
 }
 
 export interface PowerEvent {

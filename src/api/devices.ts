@@ -26,7 +26,11 @@ export async function createDevice(
 
 export async function updateDevice(
   id: string,
-  body: { name?: string; wakeTarget?: { mac?: string | null; label?: string | null } }
+  body: {
+    name?: string
+    wakeTarget?: { mac?: string | null; label?: string | null }
+    restart?: { intervalMinutes: number | null }
+  }
 ): Promise<Device> {
   const { data } = await apiClient.patch<{ device: Device }>(`/devices/${id}`, body)
   return data.device

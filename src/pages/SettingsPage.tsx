@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
@@ -19,10 +19,23 @@ import {
 } from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
   useCreateDeviceMutation,
   useDevicesQuery,
   useUpdateDeviceMutation,
 } from '@/hooks/useDeviceQueries'
+
+const RESTART_OPTIONS = [
+  { value: 'off', label: 'Off' },
+  { value: '5', label: 'Every 5 minutes' },
+  { value: '10', label: 'Every 10 minutes' },
+] as const
 
 const macRegex = /^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$/
 
@@ -38,6 +51,7 @@ const editSchema = z.object({
   name: z.string().min(1, 'Required'),
   mac: z.string().regex(macRegex, 'Format: AA:BB:CC:DD:EE:FF').or(z.literal('')),
   label: z.string().optional(),
+  restartInterval: z.enum(['off', '5', '10']),
 })
 type EditForm = z.infer<typeof editSchema>
 
@@ -105,12 +119,18 @@ function AddDeviceCard({ onCreated }: { onCreated: (apiKey: string) => void }) {
   )
 }
 
+function intervalToOption(minutes: number | null): EditForm['restartInterval'] {
+  if (minutes === 5 || minutes === 10) return String(minutes) as '5' | '10'
+  return 'off'
+}
+
 function EditDeviceCard({ device }: { device: NonNullable<ReturnType<typeof useDevicesQuery>['data']>[number] }) {
   const updateDevice = useUpdateDeviceMutation(device.id)
   const {
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors, isSubmitting, isDirty },
   } = useForm<EditForm>({
     resolver: zodResolver(editSchema),
@@ -118,11 +138,17 @@ function EditDeviceCard({ device }: { device: NonNullable<ReturnType<typeof useD
       name: device.name,
       mac: device.wakeTarget.mac ?? '',
       label: device.wakeTarget.label ?? '',
+      restartInterval: intervalToOption(device.restart.intervalMinutes),
     },
   })
 
   useEffect(() => {
-    reset({ name: device.name, mac: device.wakeTarget.mac ?? '', label: device.wakeTarget.label ?? '' })
+    reset({
+      name: device.name,
+      mac: device.wakeTarget.mac ?? '',
+      label: device.wakeTarget.label ?? '',
+      restartInterval: intervalToOption(device.restart.intervalMinutes),
+    })
   }, [device, reset])
 
   async function onSubmit(values: EditForm) {
@@ -130,6 +156,7 @@ function EditDeviceCard({ device }: { device: NonNullable<ReturnType<typeof useD
       await updateDevice.mutateAsync({
         name: values.name,
         wakeTarget: { mac: values.mac || null, label: values.label || null },
+        restart: { intervalMinutes: values.restartInterval === 'off' ? null : Number(values.restartInterval) },
       })
       toast('Device updated')
     } catch {
@@ -158,6 +185,31 @@ function EditDeviceCard({ device }: { device: NonNullable<ReturnType<typeof useD
           <div className="space-y-2">
             <Label htmlFor="edit-label">PC label (optional)</Label>
             <Input id="edit-label" {...register('label')} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="edit-restart">Scheduled restart</Label>
+            <Controller
+              control={control}
+              name="restartInterval"
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger id="edit-restart" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {RESTART_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            <p className="text-xs text-muted-foreground">
+              Reboots the ESP32 on this interval to prevent it from freezing over long uptimes.
+              A brief reconnect around each restart isn't logged as an outage.
+            </p>
           </div>
           <Button type="submit" disabled={isSubmitting || !isDirty}>
             {isSubmitting ? 'Saving…' : 'Save changes'}
