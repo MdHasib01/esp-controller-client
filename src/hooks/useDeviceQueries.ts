@@ -6,6 +6,7 @@ import {
   getDeviceEvents,
   getDeviceStats,
   listDevices,
+  setDeviceLed,
   startCheckup,
   updateDevice,
   wakeDevice,
@@ -55,6 +56,16 @@ export function useCreateDeviceMutation() {
 
 export function useWakeDeviceMutation(id: string | undefined) {
   return useMutation({ mutationFn: () => wakeDevice(id as string) })
+}
+
+export function useSetLedMutation(id: string | undefined) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (value: boolean) => setDeviceLed(id as string, value),
+    onSuccess: (device) => {
+      queryClient.setQueryData(['device', id], device)
+    },
+  })
 }
 
 export function useStartCheckupMutation(id: string | undefined) {

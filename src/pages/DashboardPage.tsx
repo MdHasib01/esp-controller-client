@@ -6,6 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { StatusHero } from '@/components/dashboard/StatusHero'
 import { WakeButton } from '@/components/dashboard/WakeButton'
 import { CheckupToggle } from '@/components/dashboard/CheckupToggle'
+import { LedToggle } from '@/components/dashboard/LedToggle'
 import { StatsRow } from '@/components/dashboard/StatsRow'
 import { RecentEvents } from '@/components/dashboard/RecentEvents'
 import { useDeviceEventsQuery, useDeviceQuery, useDevicesQuery } from '@/hooks/useDeviceQueries'
@@ -56,6 +57,10 @@ export function DashboardPage() {
       <div className="hidden gap-2 sm:flex">
         <WakeButton device={device} />
         <CheckupToggle device={device} />
+      </div>
+
+      <div className="sm:max-w-xs">
+        <LedToggle device={device} />
       </div>
 
       <StatsRow deviceId={device.id} />

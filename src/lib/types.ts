@@ -13,6 +13,7 @@ export interface Device {
   lastSeenOnlineAt: string | null
   wakeTarget: { mac: string | null; label: string | null }
   checkup: { active: boolean; startedAt: string | null; note: string | null }
+  led: { blinking: boolean }
 }
 
 export interface PowerEvent {

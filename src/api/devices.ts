@@ -36,6 +36,11 @@ export async function wakeDevice(id: string): Promise<void> {
   await apiClient.post(`/devices/${id}/wake`)
 }
 
+export async function setDeviceLed(id: string, value: boolean): Promise<Device> {
+  const { data } = await apiClient.post<{ device: Device }>(`/devices/${id}/led`, { value })
+  return data.device
+}
+
 export async function startCheckup(id: string, note?: string): Promise<Device> {
   const { data } = await apiClient.post<{ device: Device }>(`/devices/${id}/checkup/start`, {
     note,
