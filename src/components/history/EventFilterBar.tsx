@@ -25,30 +25,34 @@ const TYPE_OPTIONS: { value: EventFilters['type']; label: string }[] = [
 export function EventFilterBar({
   filters,
   onChange,
+  showType = true,
 }: {
   filters: EventFilters
   onChange: (filters: EventFilters) => void
+  showType?: boolean
 }) {
   return (
     <div className="flex flex-wrap items-end gap-3">
-      <div className="space-y-1.5">
-        <Label className="text-xs text-muted-foreground">Type</Label>
-        <Select
-          value={filters.type}
-          onValueChange={(value) => onChange({ ...filters, type: value as EventFilters['type'] })}
-        >
-          <SelectTrigger className="w-44">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {TYPE_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      {showType && (
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Type</Label>
+          <Select
+            value={filters.type}
+            onValueChange={(value) => onChange({ ...filters, type: value as EventFilters['type'] })}
+          >
+            <SelectTrigger className="w-44">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {TYPE_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
       <div className="space-y-1.5">
         <Label className="text-xs text-muted-foreground">From</Label>
         <Input

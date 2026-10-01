@@ -54,6 +54,21 @@ export function StatsRow({ deviceId }: { deviceId: string }) {
           </>
         )}
       </div>
+
+      {stats.isSuccess && (
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+          <StatTile label="Server connections" value={String(stats.data.connectionCount)} />
+          <StatTile label="Power-on boots" value={String(stats.data.powerOnBootCount)} />
+          <StatTile
+            label="Avg boot → online"
+            value={
+              stats.data.avgBootToConnectMs != null
+                ? `${(stats.data.avgBootToConnectMs / 1000).toFixed(1)}s`
+                : '—'
+            }
+          />
+        </div>
+      )}
     </div>
   )
 }

@@ -3,6 +3,7 @@ import {
   createDevice,
   endCheckup,
   getDevice,
+  getDeviceConnections,
   getDeviceEvents,
   getDeviceStats,
   listDevices,
@@ -10,6 +11,7 @@ import {
   startCheckup,
   updateDevice,
   wakeDevice,
+  type ConnectionsQuery,
   type CreateDeviceInput,
   type EventsQuery,
 } from '@/api/devices'
@@ -31,6 +33,14 @@ export function useDeviceEventsQuery(id: string | undefined, params: EventsQuery
   return useQuery({
     queryKey: ['device-events', id, params],
     queryFn: () => getDeviceEvents(id as string, params),
+    enabled: Boolean(id),
+  })
+}
+
+export function useDeviceConnectionsQuery(id: string | undefined, params: ConnectionsQuery) {
+  return useQuery({
+    queryKey: ['device-connections', id, params],
+    queryFn: () => getDeviceConnections(id as string, params),
     enabled: Boolean(id),
   })
 }

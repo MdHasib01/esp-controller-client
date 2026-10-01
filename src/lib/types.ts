@@ -29,15 +29,41 @@ export interface PowerEvent {
   createdAt: string
 }
 
+export type ConnectionEndReason =
+  | 'planned_restart'
+  | 'timeout'
+  | 'replaced'
+  | 'disconnected'
+  | 'server_restart'
+
+export interface ConnectionLog {
+  _id: string
+  device: string
+  connectedAt: string
+  disconnectedAt: string | null
+  durationMs: number | null
+  endReason: ConnectionEndReason | null
+  closeCode: number | null
+  resetReason: string | null
+  firstSinceBoot: boolean | null
+  bootToConnectMs: number | null
+  rssi: number | null
+  ip: string | null
+}
+
 export interface DeviceStats {
   range: StatsRange
   outageCount: number
   totalDowntimeMs: number
   longestOutageMs: number
   uptimePercent: number
+  connectionCount: number
+  powerOnBootCount: number
+  avgBootToConnectMs: number | null
 }
 
 export type DashboardSocketMessage =
   | { type: 'device_status'; device: Device }
   | { type: 'power_event'; event: PowerEvent }
   | { type: 'wake_ack'; deviceId: string; success: boolean }
+  | { type: 'connection_event'; connection: ConnectionLog }

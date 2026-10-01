@@ -1,5 +1,12 @@
 import { apiClient } from './client'
-import type { Device, DeviceStats, PowerEvent, PowerEventType, StatsRange } from '@/lib/types'
+import type {
+  ConnectionLog,
+  Device,
+  DeviceStats,
+  PowerEvent,
+  PowerEventType,
+  StatsRange,
+} from '@/lib/types'
 
 export async function listDevices(): Promise<Device[]> {
   const { data } = await apiClient.get<{ devices: Device[] }>('/devices')
@@ -74,6 +81,28 @@ export interface EventsResult {
 
 export async function getDeviceEvents(id: string, params: EventsQuery): Promise<EventsResult> {
   const { data } = await apiClient.get<EventsResult>(`/devices/${id}/events`, { params })
+  return data
+}
+
+export interface ConnectionsQuery {
+  page?: number
+  limit?: number
+  from?: string
+  to?: string
+}
+
+export interface ConnectionsResult {
+  connections: ConnectionLog[]
+  total: number
+  page: number
+  limit: number
+}
+
+export async function getDeviceConnections(
+  id: string,
+  params: ConnectionsQuery
+): Promise<ConnectionsResult> {
+  const { data } = await apiClient.get<ConnectionsResult>(`/devices/${id}/connections`, { params })
   return data
 }
 

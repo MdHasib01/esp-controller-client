@@ -28,6 +28,10 @@ function handleMessage(msg: DashboardSocketMessage, queryClient: QueryClient) {
       queryClient.invalidateQueries({ queryKey: ['device-events', msg.event.device] })
       queryClient.invalidateQueries({ queryKey: ['device-stats', msg.event.device] })
       break
+    case 'connection_event':
+      queryClient.invalidateQueries({ queryKey: ['device-connections', msg.connection.device] })
+      queryClient.invalidateQueries({ queryKey: ['device-stats', msg.connection.device] })
+      break
     case 'wake_ack':
       toast(msg.success ? 'PC wake command acknowledged by ESP32' : 'ESP32 failed to send the wake signal')
       break
