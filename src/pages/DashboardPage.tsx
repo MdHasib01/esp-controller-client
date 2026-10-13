@@ -11,7 +11,12 @@ import { StateTiles } from '@/components/dashboard/StateTiles'
 import { StatusStrip } from '@/components/dashboard/StatusStrip'
 import { DowntimeChart } from '@/components/dashboard/DowntimeChart'
 import { RecentPeriods } from '@/components/dashboard/RecentPeriods'
-import { useDeviceQuery, useDevicesQuery, useDeviceTimelineQuery } from '@/hooks/useDeviceQueries'
+import {
+  useDeviceLiveStatus,
+  useDeviceQuery,
+  useDevicesQuery,
+  useDeviceTimelineQuery,
+} from '@/hooks/useDeviceQueries'
 import { useNowTick } from '@/hooks/useNowTick'
 import {
   RANGE_LABEL,
@@ -40,6 +45,7 @@ export function DashboardPage() {
   const devicesQuery = useDevicesQuery()
   const firstDeviceId = devicesQuery.data?.[0]?.id
   const deviceQuery = useDeviceQuery(firstDeviceId)
+  const liveQuery = useDeviceLiveStatus(firstDeviceId)
 
   // Bucket bounds only move on the hour / at midnight, so the query key (and
   // the fetch) stays put between those boundaries despite the 1s tick.
@@ -77,18 +83,30 @@ export function DashboardPage() {
 
   const device = deviceQuery.data
   const timeline = timelineQuery.data
+  const live = liveQuery.data
+
+  // The socket pushes status changes instantly; a fetched timeline only
+  // wins when it was computed after the last push.
+  const liveIsNewer =
+    live != null &&
+    (!timeline || new Date(live.serverNow).getTime() >= new Date(timeline.asOf ?? timeline.serverNow).getTime())
+  const current = liveIsNewer ? live.current : (timeline?.current ?? null)
 
   // Live durations are measured against the server's clock, so a phone
   // whose clock is a few minutes off still shows the right timer.
-  const skew = timeline ? new Date(timeline.serverNow).getTime() - timelineQuery.dataUpdatedAt : 0
+  const skew = liveIsNewer
+    ? new Date(live.serverNow).getTime() - live.receivedAt
+    : timeline
+      ? new Date(timeline.serverNow).getTime() - timelineQuery.dataUpdatedAt
+      : 0
   const now = tick + skew
 
   return (
     <div className="space-y-4 md:space-y-5">
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          {timeline || timelineQuery.isError ? (
-            <StatusHero device={device} current={timeline?.current ?? null} now={now} />
+          {timeline || live || timelineQuery.isError ? (
+            <StatusHero device={device} current={current} now={now} />
           ) : (
             <Skeleton className="h-56 rounded-xl" />
           )}

@@ -91,6 +91,16 @@ export interface Timeline {
   page: number
   limit: number | null
   serverNow: string
+  // when the server read the device for this result (older backends omit it)
+  asOf?: string
+}
+
+/** The open end of the timeline, pushed over the socket the moment it changes. */
+export interface LiveStatus {
+  current: Timeline['current']
+  serverNow: string
+  // client clock when it arrived — pairs with serverNow for the clock skew
+  receivedAt: number
 }
 
 export type DashboardSocketMessage =
@@ -99,6 +109,8 @@ export type DashboardSocketMessage =
   | { type: 'wake_ack'; deviceId: string; success: boolean }
   | { type: 'connection_event'; connection: ConnectionLog }
   | { type: 'power_alert'; alert: PowerAlert }
+  | { type: 'live_status'; deviceId: string; current: Timeline['current']; serverNow: string }
+  | { type: 'ping' }
 
 /** Sent once per power transition — drives the alert sound/toast and push notifications. */
 export type PowerAlert = { test?: boolean } & (

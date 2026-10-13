@@ -1,5 +1,4 @@
 import { useState, type ReactNode } from 'react'
-import { isAxiosError } from 'axios'
 import { Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -14,13 +13,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
-
-function errorMessage(err: unknown): string {
-  if (isAxiosError(err) && typeof err.response?.data?.error === 'string') {
-    return err.response.data.error
-  }
-  return 'Failed to delete'
-}
+import { apiErrorMessage } from '@/lib/apiError'
 
 /** Trash icon for one history row; deletes only after the user confirms. */
 export function DeleteRowButton({
@@ -42,7 +35,7 @@ export function DeleteRowButton({
       toast('Deleted')
       setOpen(false)
     } catch (err) {
-      toast.error(errorMessage(err))
+      toast.error(apiErrorMessage(err, 'Failed to delete'))
     } finally {
       setPending(false)
     }

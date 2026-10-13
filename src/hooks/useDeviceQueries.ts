@@ -20,7 +20,7 @@ import {
   type EventsQuery,
   type TimelineQuery,
 } from '@/api/devices'
-import type { StatsRange, TimelineSegment } from '@/lib/types'
+import type { LiveStatus, StatsRange, TimelineSegment } from '@/lib/types'
 
 export function useDevicesQuery() {
   return useQuery({ queryKey: ['devices'], queryFn: listDevices })
@@ -55,9 +55,19 @@ export function useDeviceTimelineQuery(id: string | undefined, params: TimelineQ
     queryKey: ['device-timeline', id, params],
     queryFn: () => getDeviceTimeline(id as string, params),
     enabled: Boolean(id),
-    // Picks up a planned-restart grace window expiring into a power cut,
-    // which no socket event announces.
+    // Keeps the charts and totals moving; the live status/timer itself
+    // arrives over the socket (useDeviceLiveStatus).
     refetchInterval: 30_000,
+  })
+}
+
+/** Pushed by the dashboard socket the moment the device's status changes — never fetched. */
+export function useDeviceLiveStatus(id: string | undefined) {
+  return useQuery<LiveStatus | null>({
+    queryKey: ['device-live', id],
+    queryFn: () => null,
+    enabled: false,
+    staleTime: Infinity,
   })
 }
 

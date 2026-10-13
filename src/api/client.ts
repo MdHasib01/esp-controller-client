@@ -33,6 +33,38 @@ async function refreshAccessToken(): Promise<string | null> {
   }
 }
 
+// One refresh at a time, shared by every caller that needs it.
+function sharedRefresh(): Promise<string | null> {
+  refreshPromise =
+    refreshPromise ??
+    refreshAccessToken().finally(() => {
+      refreshPromise = null
+    })
+  return refreshPromise
+}
+
+function tokenExpiresAt(token: string): number | null {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
+    return typeof payload.exp === 'number' ? payload.exp * 1000 : null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * The access token, refreshed first if it has expired or is about to — for
+ * the dashboard socket, which can't ride the 401-retry below. `force`
+ * refreshes regardless (the server rejected the token, e.g. a phone whose
+ * clock is behind so it looked valid here).
+ */
+export async function getFreshAccessToken(force = false): Promise<string | null> {
+  const token = getAccessToken()
+  const expiresAt = token ? tokenExpiresAt(token) : null
+  if (!force && token && (expiresAt === null || expiresAt - Date.now() > 30_000)) return token
+  return sharedRefresh()
+}
+
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -41,9 +73,7 @@ apiClient.interceptors.response.use(
 
     if (error.response?.status === 401 && original && !original._retry && !isAuthRoute) {
       original._retry = true
-      refreshPromise = refreshPromise ?? refreshAccessToken()
-      const token = await refreshPromise
-      refreshPromise = null
+      const token = await sharedRefresh()
 
       if (token) {
         original.headers.set('Authorization', `Bearer ${token}`)

@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { useWakeDeviceMutation } from '@/hooks/useDeviceQueries'
+import { apiErrorMessage } from '@/lib/apiError'
 import type { Device } from '@/lib/types'
 
 export function WakeButton({ device, className }: { device: Device; className?: string }) {
@@ -31,8 +32,8 @@ export function WakeButton({ device, className }: { device: Device; className?: 
     try {
       await wake.mutateAsync()
       toast('Wake command sent to ESP32')
-    } catch {
-      toast.error('Failed to send wake command')
+    } catch (err) {
+      toast.error(apiErrorMessage(err, 'Failed to send wake command'))
     } finally {
       setOpen(false)
     }

@@ -3,6 +3,7 @@ import { toast } from 'sonner'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { useSetLedMutation } from '@/hooks/useDeviceQueries'
+import { apiErrorMessage } from '@/lib/apiError'
 import type { Device } from '@/lib/types'
 
 export function LedToggle({ device }: { device: Device }) {
@@ -14,8 +15,8 @@ export function LedToggle({ device }: { device: Device }) {
   async function handleChange(checked: boolean) {
     try {
       await setLed.mutateAsync(checked)
-    } catch {
-      toast.error('Failed to update LED — device may have disconnected')
+    } catch (err) {
+      toast.error(apiErrorMessage(err, 'Failed to update LED — device may have disconnected'))
     }
   }
 
