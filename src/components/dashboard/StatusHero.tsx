@@ -50,7 +50,7 @@ export function StatusHero({
           <h1 className="text-lg font-semibold tracking-tight">{device.name}</h1>
           <div className="flex flex-wrap items-center gap-1.5">
             {device.checkup.active && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-status-warning/40 bg-status-warning/15 px-2.5 py-1 text-xs font-medium text-amber-700">
+              <span className="inline-flex items-center gap-1 rounded-full border border-status-warning/40 bg-status-warning/15 px-2.5 py-1 text-xs font-medium text-amber-700 dark:text-amber-400">
                 <Wrench className="size-3.5" />
                 Checkup
               </span>

@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { ThemeProvider } from 'next-themes'
 import { Toaster } from '@/components/ui/sonner'
 import { AuthProvider } from '@/context/AuthContext'
 import { DashboardSocketProvider } from '@/context/DashboardSocketContext'
@@ -10,13 +11,15 @@ const queryClient = new QueryClient({
 
 export function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <DashboardSocketProvider>
-          <AppRoutes />
-          <Toaster mobileOffset={{ bottom: 96 }} />
-        </DashboardSocketProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <DashboardSocketProvider>
+            <AppRoutes />
+            <Toaster mobileOffset={{ bottom: 96 }} />
+          </DashboardSocketProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   )
 }

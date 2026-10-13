@@ -1,6 +1,8 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { History, LayoutDashboard, LogOut, Settings, Zap } from 'lucide-react'
+import { History, LayoutDashboard, LogOut, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { BrandLogo } from '@/components/ui/BrandLogo'
+import { ThemeToggle } from '@/components/layout/ThemeToggle'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
 import { useDashboardSocketStatus } from '@/context/DashboardSocketContext'
@@ -103,20 +105,18 @@ export function AppShell() {
   const { logout, user } = useAuth()
 
   return (
-    <div className="min-h-svh bg-muted/40">
+    <div className="min-h-svh bg-muted/40 dark:bg-background">
       <header className="sticky top-0 z-40 border-b bg-background/80 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4">
           <div className="flex items-center gap-2.5">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-              <Zap className="size-4" />
-            </div>
-            <span className="font-semibold tracking-tight">Power Monitor</span>
+            <BrandLogo size="sm" showText title="Power Monitor" subtitle="ESP32 Hub" glow={false} />
           </div>
 
           <DesktopNav />
 
           <div className="flex items-center gap-1.5">
             <SocketIndicator />
+            <ThemeToggle />
             <Button
               variant="ghost"
               size="icon"
