@@ -47,10 +47,20 @@ export async function enablePush(): Promise<void> {
   const permission = await Notification.requestPermission()
   if (permission !== 'granted') throw new Error('Notification permission was not granted')
 
-  const { enabled, publicKey } = await getPushPublicKey()
-  if (!enabled || !publicKey) throw new Error('Push notifications are not configured on the server')
+  const { enabled, publicKey, missing } = await getPushPublicKey()
+  if (!enabled || !publicKey) {
+    const vars = missing?.length ? missing.join(', ') : 'VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY'
+    throw new Error(`Server is missing ${vars} — add them to the backend env and restart it`)
+  }
 
-  const registration = await getRegistration()
+  let registration: ServiceWorkerRegistration
+  try {
+    registration = await getRegistration()
+  } catch {
+    // Usually the host answering /sw.js with index.html (SPA fallback),
+    // which browsers refuse to register.
+    throw new Error("Service worker /sw.js isn't being served by the site — upload dist/sw.js")
+  }
   await navigator.serviceWorker.ready
   const applicationServerKey = urlBase64ToUint8Array(publicKey)
 

@@ -1,12 +1,33 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { BellRing, Volume2 } from 'lucide-react'
+import { BellRing, Play, Volume2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { sendTestAlert } from '@/api/push'
-import { isAlertSoundEnabled, playAlertSound, setAlertSoundEnabled } from '@/lib/alertSound'
+import {
+  getAlertSoundChoice,
+  getAlertVolume,
+  isAlertSoundEnabled,
+  playAlertSound,
+  previewSound,
+  setAlertSoundChoice,
+  setAlertSoundEnabled,
+  setAlertVolume,
+  SOUND_OPTIONS,
+  VOLUME_OPTIONS,
+  type AlertKind,
+  type SoundId,
+  type VolumeLevel,
+} from '@/lib/alertSound'
 import {
   disablePush,
   enablePush,
@@ -24,6 +45,11 @@ export function NotificationsCard() {
   const [pushOn, setPushOn] = useState(false)
   const [pushBusy, setPushBusy] = useState(true)
   const [soundOn, setSoundOn] = useState(() => isAlertSoundEnabled())
+  const [sounds, setSounds] = useState<Record<AlertKind, SoundId>>(() => ({
+    cut: getAlertSoundChoice('cut'),
+    restored: getAlertSoundChoice('restored'),
+  }))
+  const [volume, setVolume] = useState<VolumeLevel>(() => getAlertVolume())
 
   useEffect(() => {
     syncPush()
@@ -54,6 +80,18 @@ export function NotificationsCard() {
     setSoundOn(next)
     setAlertSoundEnabled(next)
     if (next) playAlertSound('restored', { force: true })
+  }
+
+  function chooseSound(kind: AlertKind, sound: SoundId) {
+    setSounds((prev) => ({ ...prev, [kind]: sound }))
+    setAlertSoundChoice(kind, sound)
+    previewSound(sound, volume)
+  }
+
+  function chooseVolume(level: VolumeLevel) {
+    setVolume(level)
+    setAlertVolume(level)
+    previewSound(sounds.cut === 'none' ? sounds.restored : sounds.cut, level)
   }
 
   // The alert itself (sound + toast here, push on every subscribed device)
@@ -111,6 +149,42 @@ export function NotificationsCard() {
           <Switch id="sound-toggle" checked={soundOn} onCheckedChange={toggleSound} />
         </div>
 
+        {soundOn && (
+          <div className="space-y-3 rounded-lg border p-3">
+            <SoundPicker
+              label="Power cut sound"
+              value={sounds.cut}
+              volume={volume}
+              onChange={(sound) => chooseSound('cut', sound)}
+            />
+            <SoundPicker
+              label="Power back sound"
+              value={sounds.restored}
+              volume={volume}
+              onChange={(sound) => chooseSound('restored', sound)}
+            />
+            <div className="flex items-center justify-between gap-3">
+              <Label className="text-xs text-muted-foreground">Volume</Label>
+              <Select
+                items={VOLUME_OPTIONS}
+                value={volume}
+                onValueChange={(value) => chooseVolume(value as VolumeLevel)}
+              >
+                <SelectTrigger size="sm" className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {VOLUME_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={() => sendTest('cut')}>
             Test power cut alert
@@ -124,5 +198,50 @@ export function NotificationsCard() {
         </p>
       </CardContent>
     </Card>
+  )
+}
+
+function SoundPicker({
+  label,
+  value,
+  volume,
+  onChange,
+}: {
+  label: string
+  value: SoundId
+  volume: VolumeLevel
+  onChange: (sound: SoundId) => void
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <Label className="text-xs text-muted-foreground">{label}</Label>
+      <div className="flex items-center gap-1">
+        <Select
+          items={SOUND_OPTIONS}
+          value={value}
+          onValueChange={(next) => onChange(next as SoundId)}
+        >
+          <SelectTrigger size="sm" className="w-32">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {SOUND_OPTIONS.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label={`Preview ${label.toLowerCase()}`}
+          disabled={value === 'none'}
+          onClick={() => previewSound(value, volume)}
+        >
+          <Play />
+        </Button>
+      </div>
+    </div>
   )
 }
