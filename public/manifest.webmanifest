@@ -1,0 +1,12 @@
+{
+  "name": "PC Boot Control — ESP32 Workstation Hub",
+  "short_name": "PC Boot",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#070c18",
+  "theme_color": "#070c18",
+  "icons": [
+    { "src": "/logo.png", "sizes": "1024x1024", "type": "image/jpeg", "purpose": "any" }
+  ]
+}

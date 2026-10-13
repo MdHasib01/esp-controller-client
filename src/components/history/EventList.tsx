@@ -9,6 +9,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { DeleteRowButton } from '@/components/history/DeleteRowButton'
+import { useDeleteEventMutation } from '@/hooks/useDeviceQueries'
 import { EVENT_DISPLAY } from '@/lib/eventDisplay'
 import { formatDateTime, formatDuration } from '@/lib/format'
 import { cn } from '@/lib/utils'
@@ -23,7 +25,38 @@ function ResolutionBadge({ event }: { event: PowerEvent }) {
   )
 }
 
-export function EventList({ events, isLoading }: { events: PowerEvent[]; isLoading: boolean }) {
+// Ongoing events are still being tracked, so only finished ones can go.
+function DeleteEventButton({
+  event,
+  onDelete,
+}: {
+  event: PowerEvent
+  onDelete: (eventId: string) => Promise<void>
+}) {
+  if (!event.endedAt) return null
+  return (
+    <DeleteRowButton
+      title={`Delete this ${EVENT_DISPLAY[event.type].label.toLowerCase()} event?`}
+      description={`The event from ${formatDateTime(event.startedAt)} will be removed from the power events list.`}
+      onConfirm={() => onDelete(event._id)}
+    />
+  )
+}
+
+export function EventList({
+  deviceId,
+  events,
+  isLoading,
+}: {
+  deviceId: string | undefined
+  events: PowerEvent[]
+  isLoading: boolean
+}) {
+  const deleteEvent = useDeleteEventMutation(deviceId)
+  const onDelete = async (eventId: string) => {
+    await deleteEvent.mutateAsync(eventId)
+  }
+
   if (isLoading) {
     return (
       <div className="space-y-2">
@@ -56,6 +89,9 @@ export function EventList({ events, isLoading }: { events: PowerEvent[]; isLoadi
               <TableHead>Duration</TableHead>
               <TableHead>Resolution</TableHead>
               <TableHead>Note</TableHead>
+              <TableHead className="w-10">
+                <span className="sr-only">Actions</span>
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -83,6 +119,9 @@ export function EventList({ events, isLoading }: { events: PowerEvent[]; isLoadi
                   <TableCell className="max-w-48 truncate text-sm text-muted-foreground">
                     {event.note ?? '—'}
                   </TableCell>
+                  <TableCell className="text-right">
+                    <DeleteEventButton event={event} onDelete={onDelete} />
+                  </TableCell>
                 </TableRow>
               )
             })}
@@ -108,7 +147,10 @@ export function EventList({ events, isLoading }: { events: PowerEvent[]; isLoadi
                     <display.icon className="size-3.5" />
                     {display.label}
                   </span>
-                  <ResolutionBadge event={event} />
+                  <div className="flex items-center gap-1">
+                    <ResolutionBadge event={event} />
+                    <DeleteEventButton event={event} onDelete={onDelete} />
+                  </div>
                 </div>
                 <p className="text-sm">{formatDateTime(event.startedAt)}</p>
                 <p className="text-sm text-muted-foreground">Duration: {formatDuration(durationMs)}</p>

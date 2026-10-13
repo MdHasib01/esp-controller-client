@@ -4,7 +4,10 @@ import { toast } from 'sonner'
 import { WS_BASE_URL } from '@/api/client'
 import { getAccessToken } from '@/api/tokenStore'
 import { useAuth } from '@/context/AuthContext'
-import type { DashboardSocketMessage, Device } from '@/lib/types'
+import { playAlertSound } from '@/lib/alertSound'
+import { formatDuration } from '@/lib/format'
+import { showNativeAlert } from '@/lib/pushNotifications'
+import type { DashboardSocketMessage, Device, PowerAlert } from '@/lib/types'
 
 export type SocketStatus = 'connecting' | 'open' | 'closed'
 
@@ -27,6 +30,8 @@ function handleMessage(msg: DashboardSocketMessage, queryClient: QueryClient) {
     case 'power_event':
       queryClient.invalidateQueries({ queryKey: ['device-events', msg.event.device] })
       queryClient.invalidateQueries({ queryKey: ['device-stats', msg.event.device] })
+      // An outage opening/closing changes how the live gap is labelled.
+      queryClient.invalidateQueries({ queryKey: ['device-timeline', msg.event.device] })
       break
     case 'connection_event':
       queryClient.invalidateQueries({ queryKey: ['device-connections', msg.connection.device] })
@@ -36,7 +41,34 @@ function handleMessage(msg: DashboardSocketMessage, queryClient: QueryClient) {
     case 'wake_ack':
       toast(msg.success ? 'PC wake command acknowledged by ESP32' : 'ESP32 failed to send the wake signal')
       break
+    case 'power_alert':
+      showPowerAlert(msg.alert)
+      break
   }
+}
+
+const alertTimeFmt = new Intl.DateTimeFormat(undefined, {
+  hour: 'numeric',
+  minute: '2-digit',
+  second: '2-digit',
+})
+
+function showPowerAlert(alert: PowerAlert) {
+  playAlertSound(alert.kind)
+  const time = alertTimeFmt.format(new Date(alert.at))
+  const suffix = alert.test ? ' (test)' : ''
+  const message =
+    alert.kind === 'cut'
+      ? { title: `⚡ Power cut${suffix}`, body: `${alert.device.name} lost power at ${time}` }
+      : {
+          title: `✅ Power is back${suffix}`,
+          body: `${alert.device.name} came back at ${time} · was off for ${formatDuration(alert.durationMs)}`,
+        }
+
+  if (alert.kind === 'cut') toast.error(message.title, { description: message.body, duration: 15_000 })
+  else toast.success(message.title, { description: message.body, duration: 10_000 })
+
+  void showNativeAlert(alert, message)
 }
 
 export function DashboardSocketProvider({ children }: { children: ReactNode }) {

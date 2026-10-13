@@ -7,6 +7,7 @@ import type {
   PowerEventType,
   StatsRange,
   Timeline,
+  TimelineSegment,
   TimelineState,
   TimelineSummary,
 } from '@/lib/types'
@@ -107,6 +108,23 @@ export async function getDeviceConnections(
 ): Promise<ConnectionsResult> {
   const { data } = await apiClient.get<ConnectionsResult>(`/devices/${id}/connections`, { params })
   return data
+}
+
+export async function deleteDeviceEvent(id: string, eventId: string): Promise<void> {
+  await apiClient.delete(`/devices/${id}/events/${eventId}`)
+}
+
+export async function deleteDeviceConnection(id: string, logId: string): Promise<void> {
+  await apiClient.delete(`/devices/${id}/connections/${logId}`)
+}
+
+export async function deleteTimelineSegment(
+  id: string,
+  segment: Pick<TimelineSegment, 'state' | 'startedAt'>
+): Promise<void> {
+  await apiClient.delete(`/devices/${id}/timeline/segments`, {
+    params: { state: segment.state, startedAt: segment.startedAt },
+  })
 }
 
 export interface TimelineQuery {

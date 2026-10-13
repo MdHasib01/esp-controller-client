@@ -3,6 +3,7 @@ import { History, LayoutDashboard, LogOut, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { BrandLogo } from '@/components/ui/BrandLogo'
 import { ThemeToggle } from '@/components/layout/ThemeToggle'
+import { NotificationPrompt } from '@/components/layout/NotificationPrompt'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
 import { useDashboardSocketStatus } from '@/context/DashboardSocketContext'
@@ -131,6 +132,7 @@ export function AppShell() {
 
       {/* Bottom padding clears the mobile tab bar (plus the home-indicator inset). */}
       <main className="mx-auto max-w-6xl px-4 py-5 pb-[calc(6rem+env(safe-area-inset-bottom))] md:py-8 md:pb-10">
+        <NotificationPrompt />
         <Outlet />
       </main>
 

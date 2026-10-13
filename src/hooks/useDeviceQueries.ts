@@ -1,6 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   createDevice,
+  deleteDeviceConnection,
+  deleteDeviceEvent,
+  deleteTimelineSegment,
   endCheckup,
   getDevice,
   getDeviceConnections,
@@ -17,7 +20,7 @@ import {
   type EventsQuery,
   type TimelineQuery,
 } from '@/api/devices'
-import type { StatsRange } from '@/lib/types'
+import type { StatsRange, TimelineSegment } from '@/lib/types'
 
 export function useDevicesQuery() {
   return useQuery({ queryKey: ['devices'], queryFn: listDevices })
@@ -121,5 +124,40 @@ export function useUpdateDeviceMutation(id: string | undefined) {
       queryClient.setQueryData(['device', id], device)
       queryClient.invalidateQueries({ queryKey: ['devices'] })
     },
+  })
+}
+
+// A deleted row can change every view built from the same history.
+function useInvalidateHistory(id: string | undefined) {
+  const queryClient = useQueryClient()
+  return () => {
+    for (const key of ['device-events', 'device-connections', 'device-timeline', 'device-stats']) {
+      queryClient.invalidateQueries({ queryKey: [key, id] })
+    }
+  }
+}
+
+export function useDeleteEventMutation(id: string | undefined) {
+  const invalidate = useInvalidateHistory(id)
+  return useMutation({
+    mutationFn: (eventId: string) => deleteDeviceEvent(id as string, eventId),
+    onSuccess: invalidate,
+  })
+}
+
+export function useDeleteConnectionMutation(id: string | undefined) {
+  const invalidate = useInvalidateHistory(id)
+  return useMutation({
+    mutationFn: (logId: string) => deleteDeviceConnection(id as string, logId),
+    onSuccess: invalidate,
+  })
+}
+
+export function useDeleteSegmentMutation(id: string | undefined) {
+  const invalidate = useInvalidateHistory(id)
+  return useMutation({
+    mutationFn: (segment: Pick<TimelineSegment, 'state' | 'startedAt'>) =>
+      deleteTimelineSegment(id as string, segment),
+    onSuccess: invalidate,
   })
 }

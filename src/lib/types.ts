@@ -98,3 +98,21 @@ export type DashboardSocketMessage =
   | { type: 'power_event'; event: PowerEvent }
   | { type: 'wake_ack'; deviceId: string; success: boolean }
   | { type: 'connection_event'; connection: ConnectionLog }
+  | { type: 'power_alert'; alert: PowerAlert }
+
+/** Sent once per power transition — drives the alert sound/toast and push notifications. */
+export type PowerAlert = { test?: boolean } & (
+  | {
+      kind: 'cut'
+      device: { id: string; deviceId: string; name: string }
+      eventType: 'outage' | 'device_offline'
+      at: string
+    }
+  | {
+      kind: 'restored'
+      device: { id: string; deviceId: string; name: string }
+      at: string
+      startedAt: string
+      durationMs: number
+    }
+)

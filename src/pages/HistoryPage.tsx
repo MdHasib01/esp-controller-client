@@ -96,14 +96,20 @@ export function HistoryPage() {
             timelineQuery.isPending && <Skeleton className="h-24 rounded-xl" />
           )}
           <TimelineList
+            deviceId={deviceId}
             segments={timelineQuery.data?.segments ?? []}
             isLoading={timelineQuery.isPending}
           />
         </>
       ) : tab === 'events' ? (
-        <EventList events={eventsQuery.data?.events ?? []} isLoading={eventsQuery.isPending} />
+        <EventList
+          deviceId={deviceId}
+          events={eventsQuery.data?.events ?? []}
+          isLoading={eventsQuery.isPending}
+        />
       ) : (
         <ConnectionList
+          deviceId={deviceId}
           connections={connectionsQuery.data?.connections ?? []}
           isLoading={connectionsQuery.isPending}
         />

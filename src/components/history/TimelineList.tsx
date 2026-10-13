@@ -10,6 +10,8 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { StateTiles } from '@/components/dashboard/StateTiles'
+import { DeleteRowButton } from '@/components/history/DeleteRowButton'
+import { useDeleteSegmentMutation } from '@/hooks/useDeviceQueries'
 import { useNowTick } from '@/hooks/useNowTick'
 import { END_REASON_LABEL } from '@/lib/connectionDisplay'
 import { TIMELINE_DISPLAY } from '@/lib/timelineDisplay'
@@ -53,15 +55,39 @@ export function TimelineSummaryRow({ summary }: { summary: TimelineSummary }) {
   return <StateTiles summary={summary} />
 }
 
+// The ongoing period drives the live timer, so only finished ones can go.
+function DeleteSegmentButton({
+  segment,
+  onDelete,
+}: {
+  segment: TimelineSegment
+  onDelete: (segment: TimelineSegment) => Promise<void>
+}) {
+  if (!segment.endedAt) return null
+  return (
+    <DeleteRowButton
+      title={`Delete this ${TIMELINE_DISPLAY[segment.state].label.toLowerCase()} period?`}
+      description={`${formatDateTime(segment.startedAt)} → ${formatDateTime(segment.endedAt)} will be removed from the status timeline and dashboard charts.`}
+      onConfirm={() => onDelete(segment)}
+    />
+  )
+}
+
 export function TimelineList({
+  deviceId,
   segments,
   isLoading,
 }: {
+  deviceId: string | undefined
   segments: TimelineSegment[]
   isLoading: boolean
 }) {
   // Keeps the ongoing period's duration ticking.
   const now = useNowTick(1000)
+  const deleteSegment = useDeleteSegmentMutation(deviceId)
+  const onDelete = async (segment: TimelineSegment) => {
+    await deleteSegment.mutateAsync(segment)
+  }
 
   if (isLoading) {
     return (
@@ -95,6 +121,9 @@ export function TimelineList({
               <TableHead>Ended</TableHead>
               <TableHead>Duration</TableHead>
               <TableHead>Details</TableHead>
+              <TableHead className="w-10">
+                <span className="sr-only">Actions</span>
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -113,6 +142,9 @@ export function TimelineList({
                   {formatLongDuration(segmentDuration(segment, now))}
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">{detail(segment)}</TableCell>
+                <TableCell className="text-right">
+                  <DeleteSegmentButton segment={segment} onDelete={onDelete} />
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -126,11 +158,12 @@ export function TimelineList({
             <CardContent className="space-y-2 py-3">
               <div className="flex items-center justify-between">
                 <StateBadge segment={segment} />
-                <span
-                  className="text-sm font-medium tabular-nums"
-                >
-                  {formatLongDuration(segmentDuration(segment, now))}
-                </span>
+                <div className="flex items-center gap-1">
+                  <span className="text-sm font-medium tabular-nums">
+                    {formatLongDuration(segmentDuration(segment, now))}
+                  </span>
+                  <DeleteSegmentButton segment={segment} onDelete={onDelete} />
+                </div>
               </div>
               <p className="text-sm">
                 {formatDateTime(segment.startedAt)} →{' '}

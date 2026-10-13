@@ -18,6 +18,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
+import { NotificationsCard } from '@/components/settings/NotificationsCard'
 import {
   Select,
   SelectContent,
@@ -238,6 +239,7 @@ export function SettingsPage() {
       ) : (
         <AddDeviceCard onCreated={setIssuedApiKey} />
       )}
+      <NotificationsCard />
 
       <Dialog open={Boolean(issuedApiKey)} onOpenChange={(open) => !open && setIssuedApiKey(null)}>
         <DialogContent>
