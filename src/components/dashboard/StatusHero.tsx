@@ -1,89 +1,104 @@
-import { AlertTriangle, CheckCircle2, HelpCircle, Wrench } from 'lucide-react'
+import { HelpCircle, Wrench } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
+import { TIMELINE_DISPLAY } from '@/lib/timelineDisplay'
+import { formatClock, formatRelativeTime, formatWhen } from '@/lib/format'
 import { cn } from '@/lib/utils'
-import { formatDuration, formatRelativeTime } from '@/lib/format'
-import { useNowTick } from '@/hooks/useNowTick'
-import type { Device, PowerEvent } from '@/lib/types'
+import type { Device, Timeline } from '@/lib/types'
 
-interface StatusHeroProps {
-  device: Device
-  openEvent?: PowerEvent
-}
-
-const STATUS_CONFIG = {
-  checkup: {
-    label: 'Checkup Mode',
-    icon: Wrench,
-    className: 'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400',
-  },
-  power_cut: {
-    label: 'Power Cut',
-    icon: AlertTriangle,
-    className: 'border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400 animate-pulse',
-  },
-  ok: {
-    label: 'Online',
-    icon: CheckCircle2,
-    className: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-  },
-  unknown: {
-    label: 'Unreachable',
-    icon: HelpCircle,
-    className: 'border-border bg-muted text-muted-foreground',
-  },
+const TIMER_LABEL = {
+  connected: 'Connected for',
+  unreachable: 'Unreachable for',
+  power_cut: 'Power cut for',
 } as const
 
-function resolveStatusKey(device: Device): keyof typeof STATUS_CONFIG {
-  if (device.checkup.active) return 'checkup'
-  if (device.powerState === 'power_cut') return 'power_cut'
-  if (device.powerState === 'ok') return 'ok'
-  return 'unknown'
-}
+export function StatusHero({
+  device,
+  current,
+  now,
+}: {
+  device: Device
+  current: Timeline['current']
+  now: number
+}) {
+  if (!current) {
+    return (
+      <Card className="h-full">
+        <CardContent className="flex h-full flex-col justify-center gap-3 py-8">
+          <h1 className="text-xl font-semibold tracking-tight">{device.name}</h1>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <HelpCircle className="size-4" />
+            Waiting for the first connection — the timer starts when the device comes online.
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
 
-export function StatusHero({ device, openEvent }: StatusHeroProps) {
-  const now = useNowTick(1000)
-  const key = resolveStatusKey(device)
-  const { label, icon: Icon, className } = STATUS_CONFIG[key]
-
-  const liveDurationMs = openEvent ? now - new Date(openEvent.startedAt).getTime() : null
+  const display = TIMELINE_DISPLAY[current.state]
+  const Icon = display.icon
+  const elapsedMs = now - new Date(current.since).getTime()
 
   return (
-    <Card>
-      <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-4">
+    <Card
+      className={cn(
+        'relative h-full bg-linear-to-br via-card to-card ring-1 ring-foreground/10',
+        display.washClassName
+      )}
+    >
+      <CardContent className="flex h-full flex-col gap-5 py-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h1 className="text-lg font-semibold tracking-tight">{device.name}</h1>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {device.checkup.active && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-status-warning/40 bg-status-warning/15 px-2.5 py-1 text-xs font-medium text-amber-700">
+                <Wrench className="size-3.5" />
+                Checkup
+              </span>
+            )}
+            <span
+              className={cn(
+                'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold',
+                display.className
+              )}
+            >
+              <span className="relative flex size-2">
+                <span
+                  className={cn(
+                    'absolute inline-flex size-full animate-ping rounded-full opacity-60',
+                    display.fillClassName
+                  )}
+                />
+                <span className={cn('relative inline-flex size-2 rounded-full', display.fillClassName)} />
+              </span>
+              {display.label}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-end gap-4">
           <div
             className={cn(
-              'flex size-14 shrink-0 items-center justify-center rounded-full border',
-              className
+              'hidden size-14 shrink-0 items-center justify-center rounded-2xl border sm:flex',
+              display.className
             )}
           >
-            <Icon className="size-6" />
+            <Icon className="size-7" />
           </div>
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-xl font-semibold tracking-tight">{device.name}</h1>
-              <span
-                className={cn(
-                  'rounded-full border px-2.5 py-0.5 text-xs font-medium',
-                  className
-                )}
-              >
-                {label}
-              </span>
-            </div>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Last heartbeat {formatRelativeTime(device.lastHeartbeatAt)}
-              {liveDurationMs !== null && (
-                <>
-                  {' '}
-                  · {key === 'checkup' ? 'checkup' : 'outage'} ongoing for{' '}
-                  <span className="font-medium text-foreground">
-                    {formatDuration(liveDurationMs)}
-                  </span>
-                </>
-              )}
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-muted-foreground">{TIMER_LABEL[current.state]}</p>
+            <p
+              className="text-5xl font-semibold tracking-tight tabular-nums sm:text-6xl"
+              aria-live="off"
+            >
+              {formatClock(elapsedMs)}
             </p>
           </div>
+        </div>
+
+        <div className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+          <span>Since {formatWhen(current.since, now)}</span>
+          <span>Last heartbeat {formatRelativeTime(device.lastHeartbeatAt)}</span>
+          <span className="w-full sm:w-auto">{display.hint}</span>
         </div>
       </CardContent>
     </Card>

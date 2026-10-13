@@ -62,7 +62,7 @@ export interface DeviceStats {
   avgBootToConnectMs: number | null
 }
 
-export type TimelineState = 'connected' | 'power_cut'
+export type TimelineState = 'connected' | 'unreachable' | 'power_cut'
 
 export interface TimelineSegment {
   state: TimelineState
@@ -75,14 +75,13 @@ export interface TimelineSegment {
   sessions?: number
 }
 
-export interface TimelineSummary {
-  connectedMs: number
-  powerCutMs: number
-  connectedCount: number
-  powerCutCount: number
-  longestConnectedMs: number
-  longestPowerCutMs: number
+export interface TimelineStateSummary {
+  ms: number
+  count: number
+  longestMs: number
 }
+
+export type TimelineSummary = Record<TimelineState, TimelineStateSummary>
 
 export interface Timeline {
   current: { state: TimelineState; since: string } | null
@@ -90,7 +89,8 @@ export interface Timeline {
   segments: TimelineSegment[]
   total: number
   page: number
-  limit: number
+  limit: number | null
+  serverNow: string
 }
 
 export type DashboardSocketMessage =

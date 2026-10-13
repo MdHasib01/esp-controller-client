@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button'
 import { useWakeDeviceMutation } from '@/hooks/useDeviceQueries'
 import type { Device } from '@/lib/types'
 
-export function WakeButton({ device }: { device: Device }) {
+export function WakeButton({ device, className }: { device: Device; className?: string }) {
   const wake = useWakeDeviceMutation(device.id)
   const [open, setOpen] = useState(false)
 
@@ -44,7 +44,7 @@ export function WakeButton({ device }: { device: Device }) {
         render={
           <Button
             size="lg"
-            className="w-full sm:w-auto"
+            className={className ?? 'w-full sm:w-auto'}
             disabled={!canWake || wake.isPending}
             title={disabledReason}
           />

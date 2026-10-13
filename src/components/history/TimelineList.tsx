@@ -1,5 +1,5 @@
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
@@ -9,6 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { StateTiles } from '@/components/dashboard/StateTiles'
 import { useNowTick } from '@/hooks/useNowTick'
 import { END_REASON_LABEL } from '@/lib/connectionDisplay'
 import { TIMELINE_DISPLAY } from '@/lib/timelineDisplay'
@@ -41,75 +42,15 @@ function EndedCell({ segment }: { segment: TimelineSegment }) {
 }
 
 function detail(segment: TimelineSegment): string {
-  if (segment.state === 'power_cut') return '—'
+  if (segment.state !== 'connected') return TIMELINE_DISPLAY[segment.state].hint
   const parts: string[] = []
   if (segment.sessions && segment.sessions > 1) parts.push(`${segment.sessions} sessions`)
   if (segment.endReason) parts.push(`ended: ${END_REASON_LABEL[segment.endReason]}`)
   return parts.length ? parts.join(' · ') : '—'
 }
 
-function SummaryTile({
-  label,
-  value,
-  className,
-}: {
-  label: string
-  value: string
-  className?: string
-}) {
-  return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-xs font-medium text-muted-foreground">{label}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className={cn('text-2xl font-semibold tracking-tight', className)}>{value}</p>
-      </CardContent>
-    </Card>
-  )
-}
-
 export function TimelineSummaryRow({ summary }: { summary: TimelineSummary }) {
-  const totalMs = summary.connectedMs + summary.powerCutMs
-  const connectedPct = totalMs ? (summary.connectedMs / totalMs) * 100 : 0
-
-  return (
-    <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <SummaryTile
-          label="Total connected"
-          value={formatLongDuration(summary.connectedMs)}
-          className={TIMELINE_DISPLAY.connected.textClassName}
-        />
-        <SummaryTile
-          label="Total power cut"
-          value={formatLongDuration(summary.powerCutMs)}
-          className={TIMELINE_DISPLAY.power_cut.textClassName}
-        />
-        <SummaryTile label="Power cuts" value={String(summary.powerCutCount)} />
-        <SummaryTile
-          label="Longest power cut"
-          value={formatLongDuration(summary.longestPowerCutMs)}
-        />
-      </div>
-
-      {totalMs > 0 && (
-        <div className="space-y-1.5">
-          <div className="flex h-2.5 overflow-hidden rounded-full bg-muted">
-            <div
-              className={TIMELINE_DISPLAY.connected.barClassName}
-              style={{ width: `${connectedPct}%` }}
-            />
-            <div className={cn('flex-1', TIMELINE_DISPLAY.power_cut.barClassName)} />
-          </div>
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>{connectedPct.toFixed(1)}% connected</span>
-            <span>{(100 - connectedPct).toFixed(1)}% power cut</span>
-          </div>
-        </div>
-      )}
-    </div>
-  )
+  return <StateTiles summary={summary} />
 }
 
 export function TimelineList({
@@ -167,10 +108,7 @@ export function TimelineList({
                   <EndedCell segment={segment} />
                 </TableCell>
                 <TableCell
-                  className={cn(
-                    'text-sm font-medium tabular-nums',
-                    TIMELINE_DISPLAY[segment.state].textClassName
-                  )}
+                  className="text-sm font-medium tabular-nums"
                 >
                   {formatLongDuration(segmentDuration(segment, now))}
                 </TableCell>
@@ -189,10 +127,7 @@ export function TimelineList({
               <div className="flex items-center justify-between">
                 <StateBadge segment={segment} />
                 <span
-                  className={cn(
-                    'text-sm font-medium tabular-nums',
-                    TIMELINE_DISPLAY[segment.state].textClassName
-                  )}
+                  className="text-sm font-medium tabular-nums"
                 >
                   {formatLongDuration(segmentDuration(segment, now))}
                 </span>

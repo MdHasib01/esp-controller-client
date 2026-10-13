@@ -1,8 +1,6 @@
-import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
-import { History, LayoutDashboard, LogOut, Menu, Settings, Wifi, WifiOff } from 'lucide-react'
+import { History, LayoutDashboard, LogOut, Settings, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
 import { useDashboardSocketStatus } from '@/context/DashboardSocketContext'
@@ -13,21 +11,20 @@ const navItems = [
   { to: '/settings', label: 'Settings', icon: Settings, end: false },
 ]
 
-function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
+function DesktopNav() {
   return (
-    <nav className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+    <nav className="hidden items-center gap-1 rounded-full bg-muted/70 p-1 md:flex">
       {navItems.map(({ to, label, icon: Icon, end }) => (
         <NavLink
           key={to}
           to={to}
           end={end}
-          onClick={onNavigate}
           className={({ isActive }) =>
             cn(
-              'flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+              'flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium transition-all',
               isActive
-                ? 'bg-secondary text-secondary-foreground'
-                : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground'
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
             )
           }
         >
@@ -39,20 +36,64 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   )
 }
 
+function BottomTabBar() {
+  return (
+    <nav
+      className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/85 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden"
+      aria-label="Main"
+    >
+      <div className="mx-auto grid max-w-md grid-cols-3 px-2">
+        {navItems.map(({ to, label, icon: Icon, end }) => (
+          <NavLink
+            key={to}
+            to={to}
+            end={end}
+            className={({ isActive }) =>
+              cn(
+                'group flex flex-col items-center gap-1 py-2 text-[11px] font-medium transition-colors',
+                isActive ? 'text-foreground' : 'text-muted-foreground'
+              )
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <span
+                  className={cn(
+                    'flex h-8 w-14 items-center justify-center rounded-full transition-all',
+                    isActive ? 'bg-primary text-primary-foreground shadow-sm' : 'group-active:bg-muted'
+                  )}
+                >
+                  <Icon className="size-5" strokeWidth={isActive ? 2.25 : 1.75} />
+                </span>
+                {label}
+              </>
+            )}
+          </NavLink>
+        ))}
+      </div>
+    </nav>
+  )
+}
+
 function SocketIndicator() {
   const status = useDashboardSocketStatus()
   const isOpen = status === 'open'
   return (
     <div
-      className={cn(
-        'flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium',
-        isOpen
-          ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-          : 'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400'
-      )}
+      className="flex items-center gap-1.5 rounded-full border bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground"
       title={isOpen ? 'Live updates connected' : 'Reconnecting to live updates…'}
     >
-      {isOpen ? <Wifi className="size-3.5" /> : <WifiOff className="size-3.5" />}
+      <span className="relative flex size-2">
+        {isOpen && (
+          <span className="absolute inline-flex size-full animate-ping rounded-full bg-status-good opacity-60" />
+        )}
+        <span
+          className={cn(
+            'relative inline-flex size-2 rounded-full',
+            isOpen ? 'bg-status-good' : 'bg-status-warning'
+          )}
+        />
+      </span>
       {isOpen ? 'Live' : 'Reconnecting'}
     </div>
   )
@@ -60,34 +101,21 @@ function SocketIndicator() {
 
 export function AppShell() {
   const { logout, user } = useAuth()
-  const [sheetOpen, setSheetOpen] = useState(false)
 
   return (
-    <div className="min-h-svh bg-background">
-      <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-3 px-4">
-          <div className="flex items-center gap-3">
-            <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-              <SheetTrigger render={<Button variant="ghost" size="icon" className="sm:hidden" />}>
-                <Menu className="size-5" />
-              </SheetTrigger>
-              <SheetContent side="left" className="w-64">
-                <SheetHeader>
-                  <SheetTitle>Power Monitor</SheetTitle>
-                </SheetHeader>
-                <div className="px-4">
-                  <NavLinks onNavigate={() => setSheetOpen(false)} />
-                </div>
-              </SheetContent>
-            </Sheet>
+    <div className="min-h-svh bg-muted/40">
+      <header className="sticky top-0 z-40 border-b bg-background/80 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4">
+          <div className="flex items-center gap-2.5">
+            <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+              <Zap className="size-4" />
+            </div>
             <span className="font-semibold tracking-tight">Power Monitor</span>
           </div>
 
-          <div className="hidden sm:block">
-            <NavLinks />
-          </div>
+          <DesktopNav />
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <SocketIndicator />
             <Button
               variant="ghost"
@@ -101,9 +129,12 @@ export function AppShell() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 py-6 pb-24 sm:pb-6">
+      {/* Bottom padding clears the mobile tab bar (plus the home-indicator inset). */}
+      <main className="mx-auto max-w-6xl px-4 py-5 pb-[calc(6rem+env(safe-area-inset-bottom))] md:py-8 md:pb-10">
         <Outlet />
       </main>
+
+      <BottomTabBar />
     </div>
   )
 }

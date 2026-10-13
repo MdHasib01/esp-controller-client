@@ -17,7 +17,7 @@ import { Label } from '@/components/ui/label'
 import { useEndCheckupMutation, useStartCheckupMutation } from '@/hooks/useDeviceQueries'
 import type { Device } from '@/lib/types'
 
-export function CheckupToggle({ device }: { device: Device }) {
+export function CheckupToggle({ device, className }: { device: Device; className?: string }) {
   const [note, setNote] = useState('')
   const [open, setOpen] = useState(false)
   const startCheckup = useStartCheckupMutation(device.id)
@@ -25,7 +25,7 @@ export function CheckupToggle({ device }: { device: Device }) {
 
   if (device.checkup.active) {
     return (
-      <div className="flex flex-col gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
         <div className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-400">
           <Wrench className="mt-0.5 size-4 shrink-0" />
           <div>
@@ -36,6 +36,7 @@ export function CheckupToggle({ device }: { device: Device }) {
         <Button
           variant="outline"
           size="sm"
+          className="w-full bg-background"
           disabled={endCheckup.isPending}
           onClick={async () => {
             try {
@@ -54,7 +55,7 @@ export function CheckupToggle({ device }: { device: Device }) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button variant="outline" size="lg" className="w-full sm:w-auto" />}>
+      <DialogTrigger render={<Button variant="outline" size="lg" className={className ?? 'w-full sm:w-auto'} />}>
         <Wrench className="size-4" />
         Start Checkup
       </DialogTrigger>

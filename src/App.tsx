@@ -14,7 +14,7 @@ export function App() {
       <AuthProvider>
         <DashboardSocketProvider>
           <AppRoutes />
-          <Toaster />
+          <Toaster mobileOffset={{ bottom: 96 }} />
         </DashboardSocketProvider>
       </AuthProvider>
     </QueryClientProvider>

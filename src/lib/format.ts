@@ -43,6 +43,7 @@ export function formatClock(ms: number): string {
 
 /** Like formatDuration, but rolls hours into days for long totals. */
 export function formatLongDuration(ms: number): string {
+  ms = Math.max(0, ms)
   const days = Math.floor(ms / 86400000)
   if (!days) return formatDuration(ms)
   const rest = ms % 86400000
@@ -56,4 +57,31 @@ export function dayStartIso(date: string): string {
 
 export function dayEndIso(date: string): string {
   return new Date(`${date}T23:59:59.999`).toISOString()
+}
+
+const timeFmt = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' })
+const dayFmt = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' })
+
+function sameDay(a: Date, b: Date): boolean {
+  return a.toDateString() === b.toDateString()
+}
+
+/** "Today 10:30 AM", "Yesterday 9:05 PM", "Oct 3, 4:12 PM". */
+export function formatWhen(value: string | number | Date, now = Date.now()): string {
+  const date = new Date(value)
+  const today = new Date(now)
+  const yesterday = new Date(now)
+  yesterday.setDate(today.getDate() - 1)
+  if (sameDay(date, today)) return `Today ${timeFmt.format(date)}`
+  if (sameDay(date, yesterday)) return `Yesterday ${timeFmt.format(date)}`
+  return `${dayFmt.format(date)}, ${timeFmt.format(date)}`
+}
+
+/** "Today 10:30 AM → 10:45 AM" — the end drops its day when it matches the start. */
+export function formatSpan(start: string, end: string | null, now = Date.now()): string {
+  if (!end) return `${formatWhen(start, now)} → now`
+  const endLabel = sameDay(new Date(start), new Date(end))
+    ? timeFmt.format(new Date(end))
+    : formatWhen(end, now)
+  return `${formatWhen(start, now)} → ${endLabel}`
 }

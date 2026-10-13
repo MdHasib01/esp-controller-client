@@ -79,7 +79,7 @@ export function HistoryPage() {
         <h1 className="text-xl font-semibold tracking-tight">History</h1>
         <Tabs value={tab} onValueChange={(v) => changeTab(v as HistoryTab)}>
           <TabsList>
-            <TabsTrigger value="timeline">Connected / Power cut</TabsTrigger>
+            <TabsTrigger value="timeline">Status timeline</TabsTrigger>
             <TabsTrigger value="events">Power events</TabsTrigger>
             <TabsTrigger value="connections">Connections</TabsTrigger>
           </TabsList>

@@ -7,6 +7,8 @@ import type {
   PowerEventType,
   StatsRange,
   Timeline,
+  TimelineState,
+  TimelineSummary,
 } from '@/lib/types'
 
 export async function listDevices(): Promise<Device[]> {
@@ -109,14 +111,32 @@ export async function getDeviceConnections(
 
 export interface TimelineQuery {
   page?: number
-  limit?: number
+  // "all": every period in range, oldest first (for charts)
+  limit?: number | 'all'
   from?: string
   to?: string
 }
 
+const TIMELINE_STATES: TimelineState[] = ['connected', 'unreachable', 'power_cut']
+
 export async function getDeviceTimeline(id: string, params: TimelineQuery): Promise<Timeline> {
   const { data } = await apiClient.get<Timeline>(`/devices/${id}/timeline`, { params })
-  return data
+
+  // Fill any state the server didn't send (e.g. a backend deployed before
+  // 'unreachable' existed) with zeros, so the dashboard degrades instead of
+  // crashing on summary[state].ms.
+  const raw = (data.summary ?? {}) as Partial<TimelineSummary>
+  const summary = {} as TimelineSummary
+  for (const state of TIMELINE_STATES) {
+    summary[state] = { ms: 0, count: 0, longestMs: 0, ...raw[state] }
+  }
+
+  return {
+    ...data,
+    summary,
+    segments: (data.segments ?? []).filter((s) => TIMELINE_STATES.includes(s.state)),
+    serverNow: data.serverNow ?? new Date().toISOString(),
+  }
 }
 
 export async function getDeviceStats(id: string, range: StatsRange): Promise<DeviceStats> {
