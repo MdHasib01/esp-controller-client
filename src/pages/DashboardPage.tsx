@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { StatusHero } from '@/components/dashboard/StatusHero'
+import { LiveTimer } from '@/components/dashboard/LiveTimer'
 import { WakeButton } from '@/components/dashboard/WakeButton'
 import { CheckupToggle } from '@/components/dashboard/CheckupToggle'
 import { LedToggle } from '@/components/dashboard/LedToggle'
@@ -53,6 +54,8 @@ export function DashboardPage() {
   return (
     <div className="space-y-4">
       <StatusHero device={device} openEvent={openEvent} />
+
+      <LiveTimer deviceId={device.id} />
 
       <div className="hidden gap-2 sm:flex">
         <WakeButton device={device} />

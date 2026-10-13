@@ -25,3 +25,35 @@ export function formatRelativeTime(iso: string | null): string {
 export function formatDateTime(iso: string): string {
   return new Date(iso).toLocaleString()
 }
+
+/** Stopwatch-style "2d 03:04:05" / "03:04:05" for live timers. */
+export function formatClock(ms: number): string {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000))
+  const days = Math.floor(totalSeconds / 86400)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const clock = [
+    Math.floor((totalSeconds % 86400) / 3600),
+    Math.floor((totalSeconds % 3600) / 60),
+    totalSeconds % 60,
+  ]
+    .map(pad)
+    .join(':')
+  return days ? `${days}d ${clock}` : clock
+}
+
+/** Like formatDuration, but rolls hours into days for long totals. */
+export function formatLongDuration(ms: number): string {
+  const days = Math.floor(ms / 86400000)
+  if (!days) return formatDuration(ms)
+  const rest = ms % 86400000
+  return rest >= 60000 ? `${days}d ${formatDuration(rest)}` : `${days}d`
+}
+
+/** Local-midnight bounds for a "YYYY-MM-DD" date input, as ISO strings. */
+export function dayStartIso(date: string): string {
+  return new Date(`${date}T00:00:00`).toISOString()
+}
+
+export function dayEndIso(date: string): string {
+  return new Date(`${date}T23:59:59.999`).toISOString()
+}

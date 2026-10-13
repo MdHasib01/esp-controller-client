@@ -52,7 +52,7 @@ export function RecentEvents({
           variant="ghost"
           size="sm"
           nativeButton={false}
-          render={<Link to={`/history?deviceId=${deviceId}`} />}
+          render={<Link to={`/history?deviceId=${deviceId}&tab=events`} />}
         >
           View all
         </Button>

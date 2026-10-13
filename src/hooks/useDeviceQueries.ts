@@ -6,6 +6,7 @@ import {
   getDeviceConnections,
   getDeviceEvents,
   getDeviceStats,
+  getDeviceTimeline,
   listDevices,
   setDeviceLed,
   startCheckup,
@@ -14,6 +15,7 @@ import {
   type ConnectionsQuery,
   type CreateDeviceInput,
   type EventsQuery,
+  type TimelineQuery,
 } from '@/api/devices'
 import type { StatsRange } from '@/lib/types'
 
@@ -42,6 +44,17 @@ export function useDeviceConnectionsQuery(id: string | undefined, params: Connec
     queryKey: ['device-connections', id, params],
     queryFn: () => getDeviceConnections(id as string, params),
     enabled: Boolean(id),
+  })
+}
+
+export function useDeviceTimelineQuery(id: string | undefined, params: TimelineQuery) {
+  return useQuery({
+    queryKey: ['device-timeline', id, params],
+    queryFn: () => getDeviceTimeline(id as string, params),
+    enabled: Boolean(id),
+    // Picks up a planned-restart grace window expiring into a power cut,
+    // which no socket event announces.
+    refetchInterval: 30_000,
   })
 }
 

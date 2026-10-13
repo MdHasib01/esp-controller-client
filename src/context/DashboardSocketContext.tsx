@@ -30,6 +30,7 @@ function handleMessage(msg: DashboardSocketMessage, queryClient: QueryClient) {
       break
     case 'connection_event':
       queryClient.invalidateQueries({ queryKey: ['device-connections', msg.connection.device] })
+      queryClient.invalidateQueries({ queryKey: ['device-timeline', msg.connection.device] })
       queryClient.invalidateQueries({ queryKey: ['device-stats', msg.connection.device] })
       break
     case 'wake_ack':

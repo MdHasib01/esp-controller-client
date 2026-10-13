@@ -6,6 +6,7 @@ import type {
   PowerEvent,
   PowerEventType,
   StatsRange,
+  Timeline,
 } from '@/lib/types'
 
 export async function listDevices(): Promise<Device[]> {
@@ -103,6 +104,18 @@ export async function getDeviceConnections(
   params: ConnectionsQuery
 ): Promise<ConnectionsResult> {
   const { data } = await apiClient.get<ConnectionsResult>(`/devices/${id}/connections`, { params })
+  return data
+}
+
+export interface TimelineQuery {
+  page?: number
+  limit?: number
+  from?: string
+  to?: string
+}
+
+export async function getDeviceTimeline(id: string, params: TimelineQuery): Promise<Timeline> {
+  const { data } = await apiClient.get<Timeline>(`/devices/${id}/timeline`, { params })
   return data
 }
 

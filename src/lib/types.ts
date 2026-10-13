@@ -62,6 +62,37 @@ export interface DeviceStats {
   avgBootToConnectMs: number | null
 }
 
+export type TimelineState = 'connected' | 'power_cut'
+
+export interface TimelineSegment {
+  state: TimelineState
+  startedAt: string
+  endedAt: string | null
+  durationMs: number
+  // connected periods only: why it ended, and how many server sessions
+  // (the board reboots every 5 minutes) were merged into it
+  endReason?: ConnectionEndReason | null
+  sessions?: number
+}
+
+export interface TimelineSummary {
+  connectedMs: number
+  powerCutMs: number
+  connectedCount: number
+  powerCutCount: number
+  longestConnectedMs: number
+  longestPowerCutMs: number
+}
+
+export interface Timeline {
+  current: { state: TimelineState; since: string } | null
+  summary: TimelineSummary
+  segments: TimelineSegment[]
+  total: number
+  page: number
+  limit: number
+}
+
 export type DashboardSocketMessage =
   | { type: 'device_status'; device: Device }
   | { type: 'power_event'; event: PowerEvent }
