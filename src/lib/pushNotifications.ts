@@ -13,10 +13,14 @@ export function getPushSupport(): PushSupport {
   return Notification.permission === 'denied' ? 'denied' : 'supported'
 }
 
+// The build id makes every deploy fetch a URL no CDN has cached yet;
+// registering a new URL for the same scope replaces the old worker.
+const SW_URL = `/sw.js?v=${import.meta.env.VITE_BUILD_ID}`
+
 export function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch((err) => {
+    navigator.serviceWorker.register(SW_URL).catch((err) => {
       console.warn('[push] service worker registration failed', err)
     })
   })
@@ -32,8 +36,10 @@ function urlBase64ToUint8Array(base64: string): Uint8Array<ArrayBuffer> {
   return bytes
 }
 
-async function getRegistration(): Promise<ServiceWorkerRegistration> {
-  return (await navigator.serviceWorker.getRegistration('/')) ?? navigator.serviceWorker.register('/sw.js')
+// Always (re-)registers rather than reusing an existing registration, so a
+// worker left over from an older deploy is swapped for this build's.
+function getRegistration(): Promise<ServiceWorkerRegistration> {
+  return navigator.serviceWorker.register(SW_URL)
 }
 
 export async function getCurrentSubscription(): Promise<PushSubscription | null> {
@@ -59,7 +65,9 @@ export async function enablePush(): Promise<void> {
   } catch {
     // Usually the host answering /sw.js with index.html (SPA fallback),
     // which browsers refuse to register.
-    throw new Error("Service worker /sw.js isn't being served by the site — upload dist/sw.js")
+    throw new Error(
+      "Service worker /sw.js isn't being served by the site — upload dist/sw.js and purge it from the CDN cache"
+    )
   }
   await navigator.serviceWorker.ready
   const applicationServerKey = urlBase64ToUint8Array(publicKey)
